@@ -62,3 +62,8 @@ Build Command: npm run build
 Output Directory: dist
 Install Command: npm install
 
+
+
+## 本版更新
+- 预约时间段改为 10:00–22:00 每1小时一个预约格。
+- 已取消一键清空功能，避免误触删除全部预约。
