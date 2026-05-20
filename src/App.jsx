@@ -2,14 +2,16 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
 const ROOMS = [
-  { id: 'room-1', name: '1号大教室', capacity: 16, note: '小班课 / 模拟考' },
-  { id: 'room-2', name: '2号教室', capacity: 12, note: '小班课 / 一对一' },
-  { id: 'room-3', name: '3号教室', capacity: 8, note: '一对一 / 面谈' },
-  { id: 'atelier-1f', name: '1楼画室', capacity: 20, note: '说明会 / 大型活动' },
-  { id: 'music-6f', name: '6楼音乐部', capacity: 8, note: '音乐生 / 面试练习' },
+  { id: 'room-1', name: '1号小教室', capacity: 3, note: '一对一' },
+  { id: 'room-2', name: '2号小教室', capacity: 3, note: '一对一' },
+  { id: 'room-3', name: '3号小教室', capacity: 3, note: '一对一' },
+  { id: 'atelier-1f', name: '3号大教室', capacity: 6, note: '小组课 / 一对一' },
+  { id: 'music-6f', name: '6楼音乐部1号教室', capacity: 3, note: '小组课 / 一对一' },
+  { id: 'music-6f-2', name: '6楼音乐部2号教室', capacity: 3, note: '小组课 / 一对一' },
+  { id: 'music-6f-3', name: '6楼音乐部3号教室', capacity: 3, note: '小组课 / 一对一' },
 ]
 
-const TIME_SLOTS = ['10:00-12:00', '12:00-14:00', '14:00-16:00', '16:00-18:00', '18:00-20:00', '20:00-22:00']
+const TIME_SLOTS = ['10:00-11:00', '11:00-12:00', '12:00-13:00', '13:00-14:00', '14:00-15:00', '15:00-16:00', '16:00-17:00', '17:00-18:00', '18:00-19:00', '19:00-20:00', '20:00-21:00', '21:00-22:00']
 const PURPOSES = ['小班课', '一对一', '模拟考', '升学指导', '面试练习', '说明会', '其他']
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
@@ -177,20 +179,13 @@ export default function App() {
     await fetchBookings()
   }
 
-  async function clearAll() {
-    if (!supabase) return
-    if (!confirm('确定清空所有预约吗？此操作会影响所有人。')) return
-    const { error } = await supabase.from('classroom_bookings').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-    if (error) { setError(error.message); alert(error.message); return }
-    await fetchBookings()
-  }
 
   return <div className="page">
     <header className="hero">
       <div>
         <div className="badge">楽之教育｜教室预约系统</div>
         <h1>多人共享教室预约</h1>
-        <p>10:00–22:00，每2小时一个预约段。所有预约保存到 Supabase 云端数据库。</p>
+        <p>10:00–22:00，每1小时一个预约格。所有预约保存到 Supabase 云端数据库。</p>
         <div className={`status ${status === '云端同步中' ? 'ok' : 'warn'}`}>{status}</div>
       </div>
       <div className="stats">
@@ -222,7 +217,6 @@ export default function App() {
         <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="搜索学生、老师、课程、备注" />
         <button onClick={fetchBookings} disabled={!supabase || loading}>{loading ? '刷新中' : '刷新'}</button>
         <button onClick={() => downloadCSV(bookings)}>导出CSV</button>
-        <button className="danger" onClick={clearAll}>清空</button>
       </div>
     </section>
 
