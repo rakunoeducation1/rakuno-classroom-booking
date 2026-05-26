@@ -7,7 +7,6 @@ const ROOMS = [
   { id: 'room-3', name: '3号小教室', capacity: 3, note: '一对一' },
   { id: 'atelier-1f', name: '3号大教室', capacity: 6, note: '小组课 / 一对一' },
   { id: 'music-6f', name: '6楼音乐部1号教室', capacity: 3, note: '小组课 / 一对一' },
-  { id: 'music-6f-2', name: '6楼音乐部2号教室', capacity: 3, note: '小组课 / 一对一' },
   { id: 'music-6f-3', name: '6楼音乐部3号教室', capacity: 3, note: '小组课 / 一对一' },
 ]
 
