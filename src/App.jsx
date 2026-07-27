@@ -223,9 +223,14 @@ export default function App() {
     setLoading(true)
     setError('')
 
+    const weekStartKey = dateKey(weekStart)
+    const weekEndKey = dateKey(addDays(weekStart, 6))
+
     const { data, error } = await supabase
       .from('classroom_bookings')
       .select('*')
+      .gte('date', weekStartKey)
+      .lte('date', weekEndKey)
       .order('date')
       .order('slot')
 
@@ -255,7 +260,13 @@ export default function App() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [])
+  }, [weekStart])
+
+  function changeWeek(days) {
+    const nextWeekStart = addDays(weekStart, days)
+    setWeekStart(nextWeekStart)
+    setSelectedDate(dateKey(nextWeekStart))
+  }
 
   function openSlot(date, roomId, slot) {
     const existing = bookingsMap.get(keyOf(date, roomId, slot))
@@ -395,7 +406,7 @@ export default function App() {
 
       <section className="toolbar">
         <div className="weekNav">
-          <button onClick={() => setWeekStart(addDays(weekStart, -7))}>上一周</button>
+          <button onClick={() => changeWeek(-7)}>上一周</button>
           <button
             onClick={() => {
               const t = new Date()
@@ -405,7 +416,7 @@ export default function App() {
           >
             今天
           </button>
-          <button onClick={() => setWeekStart(addDays(weekStart, 7))}>下一周</button>
+          <button onClick={() => changeWeek(7)}>下一周</button>
         </div>
 
         <div className="filters">
