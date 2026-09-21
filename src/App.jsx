@@ -167,7 +167,7 @@ export default function App() {
   const [search, setSearch] = useState('')
   const [modal, setModal] = useState(null)
   const [form, setForm] = useState({ name: '', purpose: '小班课', memo: '' })
-  const [status, setStatus] = useState(supabase ? '连接中' : '未配置数据库')
+  const [status, setStatus] = useState(supabase ? '正在连接云端…' : '未配置数据库')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -222,27 +222,31 @@ export default function App() {
 
     setLoading(true)
     setError('')
+    setStatus('正在同步…')
 
     const weekStartKey = dateKey(weekStart)
     const weekEndKey = dateKey(addDays(weekStart, 6))
 
-    const { data, error } = await supabase
-      .from('classroom_bookings')
-      .select('*')
-      .gte('date', weekStartKey)
-      .lte('date', weekEndKey)
-      .order('date')
-      .order('slot')
+    try {
+      const { data, error } = await supabase
+        .from('classroom_bookings')
+        .select('*')
+        .gte('date', weekStartKey)
+        .lte('date', weekEndKey)
+        .order('date')
+        .order('slot')
 
-    if (error) {
-      setError(error.message)
-      setStatus('连接错误')
-    } else {
+      if (error) throw error
+
       setBookings(data || [])
-      setStatus('云端同步中')
+      setStatus('云端数据已同步')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      setError(message)
+      setStatus('云端连接错误')
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   useEffect(() => {
@@ -254,7 +258,10 @@ export default function App() {
       .channel('classroom_bookings_realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'classroom_bookings' }, fetchBookings)
       .subscribe((s) => {
-        if (s === 'SUBSCRIBED') setStatus('云端同步中')
+        if (s === 'SUBSCRIBED') setStatus('实时同步已连接')
+        if (s === 'CHANNEL_ERROR') setStatus('实时连接错误')
+        if (s === 'TIMED_OUT') setStatus('实时连接超时')
+        if (s === 'CLOSED') setStatus('实时连接已断开')
       })
 
     return () => {
@@ -375,7 +382,9 @@ export default function App() {
           <h1>多人共享教室预约</h1>
           <p>10:00–22:00，每1小时一个预约格。所有预约保存到 Supabase 云端数据库。</p>
           <p className="muted">3号大教室：每周四、周五18:00以后不可预约。</p>
-          <div className={`status ${status === '云端同步中' ? 'ok' : 'warn'}`}>{status}</div>
+          <div className={`status ${status === '云端数据已同步' || status === '实时同步已连接' ? 'ok' : 'warn'}`}>
+            {status}
+          </div>
         </div>
 
         <div className="stats">
