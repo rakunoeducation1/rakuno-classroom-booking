@@ -32,6 +32,9 @@ const BLOCKED_ROOM_ID = 'atelier-1f'
 
 // 18:00 及以后不可预约。
 const BLOCKED_AFTER_MINUTES = 18 * 60
+const BLOCKED_SATURDAY_START_MINUTES = 14 * 60
+const BLOCKED_SATURDAY_END_MINUTES = 18 * 60
+const BLOCKED_SLOT_MESSAGE = '3号大教室：每周二、周四18:00起不可预约；周六14:00–18:00不可预约（18:00起可预约）。'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
@@ -123,14 +126,17 @@ function slotStartMinutes(slot) {
   return h * 60 + m
 }
 
-// 核心限制：3号大教室，周四/周五，18:00及以后不可预约。
+// 核心限制：仅3号大教室；周二/周四18:00起，周六14:00至18:00。
 function isBlockedSlot(date, roomId, slot) {
   const weekday = parseDateKey(date).getDay() // 0日 1月 2火 3水 4木 5金 6土
+  const start = slotStartMinutes(slot)
 
   return (
     roomId === BLOCKED_ROOM_ID &&
-    (weekday === 4 || weekday === 5) &&
-    slotStartMinutes(slot) >= BLOCKED_AFTER_MINUTES
+    (
+      ((weekday === 2 || weekday === 4) && start >= BLOCKED_AFTER_MINUTES) ||
+      (weekday === 6 && start >= BLOCKED_SATURDAY_START_MINUTES && start < BLOCKED_SATURDAY_END_MINUTES)
+    )
   )
 }
 
@@ -287,7 +293,7 @@ export default function App() {
 
     // 新增预约时拦截。
     if (isBlockedSlot(date, roomId, slot)) {
-      alert('3号大教室每周四、周五18:00以后不可预约。')
+      alert(BLOCKED_SLOT_MESSAGE)
       return
     }
 
@@ -308,7 +314,7 @@ export default function App() {
 
     // 保存时再次拦截，防止绕过按钮直接提交。
     if (modal.mode === 'new' && isBlockedSlot(modal.date, modal.roomId, modal.slot)) {
-      alert('3号大教室每周四、周五18:00以后不可预约。')
+      alert(BLOCKED_SLOT_MESSAGE)
       return
     }
 
@@ -381,7 +387,7 @@ export default function App() {
           <div className="badge">楽之教育｜教室预约系统</div>
           <h1>多人共享教室预约</h1>
           <p>10:00–22:00，每1小时一个预约格。所有预约保存到 Supabase 云端数据库。</p>
-          <p className="muted">3号大教室：每周四、周五18:00以后不可预约。</p>
+          <p className="muted">{BLOCKED_SLOT_MESSAGE}</p>
           <div className={`status ${status === '云端数据已同步' || status === '实时同步已连接' ? 'ok' : 'warn'}`}>
             {status}
           </div>
@@ -509,7 +515,7 @@ export default function App() {
                           <button
                             className="empty"
                             disabled
-                            title="3号大教室每周四、周五18:00以后不可预约"
+                            title={BLOCKED_SLOT_MESSAGE}
                             style={{
                               cursor: 'not-allowed',
                               opacity: 0.55,
